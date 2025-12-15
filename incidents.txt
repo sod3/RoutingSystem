@@ -1,0 +1,4 @@
+# Format: location,priority,description
+1,HIGH,Car accident at intersection
+3,MEDIUM,Medical emergency at hospital
+2,LOW,Routine patient transfer
