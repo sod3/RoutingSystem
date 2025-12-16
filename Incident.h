@@ -5,62 +5,52 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
 class Graph;
 
 class Incident {
-private:
     int id;
-    int location;  // node ID
-    string priority; // "HIGH", "MEDIUM", "LOW"
-    string description;
+    int location;
+    std::string priority;
+    std::string description;
     bool resolved;
 
 public:
-    Incident(int loc, const string &pri, const string &desc);
+    Incident(int loc, const std::string &pri, const std::string &desc);
     
-    // Getters
     int getId() const;
     int getLocation() const;
-    string getPriority() const;
-    string getDescription() const;
+    std::string getPriority() const;
+    std::string getDescription() const;
     bool isResolved() const;
-    
-    // Priority comparison (HIGH > MEDIUM > LOW)
     int getPriorityValue() const;
     
     void resolve();
-    
     void display() const;
 };
 
-// Custom comparator for priority queue
 struct CompareIncidentPriority {
     bool operator()(const Incident* a, const Incident* b);
 };
 
 class IncidentQueue {
-private:
-    priority_queue<Incident*, vector<Incident*>, CompareIncidentPriority> pq;
-    vector<Incident*> allIncidents;
+    std::priority_queue<Incident*, std::vector<Incident*>, CompareIncidentPriority> pq;
+    std::vector<Incident*> allIncidents;
     
 public:
     IncidentQueue();
+    ~IncidentQueue();
     
-    void addIncident(int location, const string &priority, const string &description);
-    
+    void addIncident(int location, const std::string &priority, const std::string &description);
     void reAddIncident(Incident* inc);
-    
     Incident* getNextIncident();
-    
     bool isEmpty() const;
-    
     int size() const;
-    
+    int getActiveCount() const;
     void displayAll() const;
-    
-    void loadFromFile(const string &filename, Graph &graph);
+    void loadFromFile(const std::string &filename, Graph &graph);
+    void saveToFile(const std::string &filename) const;
+    void generateTestIncidents(int count, Graph &graph);
+    void clearAll();
 };
 
 #endif

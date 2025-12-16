@@ -1,0 +1,31 @@
+Functional Requirements Document (FRD)
+Emergency Planning and Resource Allocation
+System Overviews/Summary:
+The system is an Emergency Routing & Resource Allocation System that helps ambulances reach emergency locations as fast as possible. The city is modelled as a graph where intersections are nodes and roads are edges with weights (travel time or distance). When an incident happens (like an accident at a certain node), the system must automatically find the nearest available ambulance, compute the fastest route using Dijkstra’s algorithm, and if new incidents occur, reassign resources dynamically. The system maintains an incident queue, keeps track of ambulance locations and statuses, and updates routing based on changing conditions (like blocked roads). Everything is console-based, with file input and implementations of standard data structures.
+
+Functional Requirements:
+•	The system shall load the graph from a file
+•	The system will compute the shortest path to the incident node through Dijkstra’s algorithm
+•	The system will maintain an incident queue for resource allocation
+•	The system will also assign the nearest available unit
+•	The system will update ambulance status.
+
+Non-functional Requirements:
+•	Console-based
+•	Simple UI
+
+
+Use-Case Scenario(s)
+Actor: Emergency Dispatcher (responsible for operating the system by handling emergencies)
+Use-cases:
+1.	Check Ambulance availability
+2.	Report Incident
+3.	Assign/confirm dispatch of the nearest Unit
+4.	Compute shortest path/optimal route
+5.	View system status (units, incidents, assignments).
+Actor: System Administrator (admin, responsible for system setup, data, and testing)
+Use-cases:
+1.	Add, remove, or modify the unit/ambulance records
+2.	Generate or load sample incidents for testing
+3.	Maintain system configuration files (graph.txt, ambulances.txt etc.)
+4.	Load or update the city map (node, edges, weights).

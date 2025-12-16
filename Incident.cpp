@@ -3,11 +3,13 @@
 #include "Graph.h"
 #include <iostream>
 #include <fstream>
-#include <algorithm> // for find
+#include <algorithm>
+#include <cstdlib>
+#include <ctime>
+#include <vector>
+#include <string>
 
-using namespace std;
-
-Incident::Incident(int loc, const string &pri, const string &desc) {
+Incident::Incident(int loc, const std::string &pri, const std::string &desc) {
     static int nextId = 1;
     id = nextId++;
     location = loc;
@@ -16,11 +18,25 @@ Incident::Incident(int loc, const string &pri, const string &desc) {
     resolved = false;
 }
 
-int Incident::getId() const { return id; }
-int Incident::getLocation() const { return location; }
-string Incident::getPriority() const { return priority; }
-string Incident::getDescription() const { return description; }
-bool Incident::isResolved() const { return resolved; }
+int Incident::getId() const { 
+    return id; 
+}
+
+int Incident::getLocation() const { 
+    return location; 
+}
+
+std::string Incident::getPriority() const { 
+    return priority; 
+}
+
+std::string Incident::getDescription() const { 
+    return description; 
+}
+
+bool Incident::isResolved() const { 
+    return resolved; 
+}
 
 int Incident::getPriorityValue() const {
     if (priority == "HIGH") return 3;
@@ -28,25 +44,33 @@ int Incident::getPriorityValue() const {
     return 1;
 }
 
-void Incident::resolve() { resolved = true; }
+void Incident::resolve() { 
+    resolved = true; 
+}
 
 void Incident::display() const {
-    cout << "Incident #" << id << " at Node " << location 
-         << " [" << priority << "]: " << description 
-         << (resolved ? " (RESOLVED)" : " (ACTIVE)") << endl;
+    std::cout << "Incident #" << id << " at Node " << location 
+              << " [" << priority << "]: " << description 
+              << (resolved ? " (RESOLVED)" : " (ACTIVE)") << std::endl;
 }
 
 bool CompareIncidentPriority::operator()(const Incident* a, const Incident* b) {
-    return a->getPriorityValue() < b->getPriorityValue(); // Higher priority first
+    return a->getPriorityValue() < b->getPriorityValue();
 }
 
-IncidentQueue::IncidentQueue() {}
+IncidentQueue::IncidentQueue() {
+    std::srand(std::time(0));
+}
 
-void IncidentQueue::addIncident(int location, const string &priority, const string &description) {
-    Incident* incident = new Incident(location, priority, description);
+IncidentQueue::~IncidentQueue() {
+    clearAll();
+}
+
+void IncidentQueue::addIncident(int location, const std::string &priority, const std::string &description) {
+    auto incident = new Incident(location, priority, description);
     pq.push(incident);
     allIncidents.push_back(incident);
-    cout << "Added: ";
+    std::cout << "Added: ";
     incident->display();
 }
 
@@ -57,7 +81,7 @@ void IncidentQueue::reAddIncident(Incident* inc) {
 Incident* IncidentQueue::getNextIncident() {
     if (pq.empty()) return nullptr;
     
-    Incident* next = pq.top();
+    auto next = pq.top();
     pq.pop();
     return next;
 }
@@ -70,47 +94,165 @@ int IncidentQueue::size() const {
     return pq.size();
 }
 
+int IncidentQueue::getActiveCount() const {
+    int count = 0;
+    for (auto incident : allIncidents) {
+        if (!incident->isResolved()) {
+            count++;
+        }
+    }
+    return count;
+}
+
 void IncidentQueue::displayAll() const {
-    cout << "\n=== All Incidents ===" << endl;
+    std::cout << "\nAll Incidents" << std::endl;
     if (allIncidents.empty()) {
-        cout << "No incidents recorded." << endl;
+        std::cout << "No incidents recorded." << std::endl;
         return;
     }
     
-    for (Incident* incident : allIncidents) {
+    int active = 0;
+    int resolved = 0;
+    
+    for (auto incident : allIncidents) {
         incident->display();
+        if (incident->isResolved()) {
+            resolved++;
+        } else {
+            active++;
+        }
     }
-    cout << "Total: " << allIncidents.size() << " incidents" << endl;
+    std::cout << "Total: " << allIncidents.size() << " incidents (" 
+              << active << " active, " << resolved << " resolved)" << std::endl;
 }
 
-void IncidentQueue::loadFromFile(const string &filename, Graph &graph) {
-    ifstream file(filename);
-    string line;
+void IncidentQueue::loadFromFile(const std::string &filename, Graph &graph) {
+    std::ifstream file(filename);
+    std::string line;
     
     if (!file.is_open()) {
-        cout << "Error: Cannot open file " << filename << endl;
+        std::cout << "Can't open " << filename << std::endl;
         return;
     }
     
     while (getline(file, line)) {
         if (line.empty() || line[0] == '#') continue;
         
-        vector<string> parts = split(line, ',');
+        auto parts = split(line, ',');
         if (parts.size() >= 3) {
-            int location = stoi(parts[0]);
-            string priority = parts[1];
-            string description = parts[2];
+            int location = std::stoi(parts[0]);
+            std::string priority = parts[1];
+            std::string description = parts[2];
             
-            // Check if location exists in graph
-            vector<int> nodes = graph.getAllNodes();
-            if (find(nodes.begin(), nodes.end(), location) != nodes.end()) {
+            auto nodes = graph.getAllNodes();
+            if (std::find(nodes.begin(), nodes.end(), location) != nodes.end()) {
                 addIncident(location, priority, description);
             } else {
-                cout << "Warning: Node " << location << " not in graph. Skipping incident." << endl;
+                std::cout << "Node " << location << " not in graph. Skipping." << std::endl;
             }
         }
     }
     
     file.close();
-    cout << "Incidents loaded from " << filename << endl;
+    std::cout << "Incidents loaded from " << filename << std::endl;
+}
+
+void IncidentQueue::saveToFile(const std::string &filename) const {
+    std::ofstream file(filename);
+    
+    if (!file.is_open()) {
+        std::cout << "Can't create " << filename << std::endl;
+        return;
+    }
+    
+    file << "# Incident data: Location,Priority,Description" << std::endl;
+    file << "# Generated by Emergency Routing System" << std::endl;
+    
+    for (auto incident : allIncidents) {
+        if (!incident->isResolved()) {
+            file << incident->getLocation() << ","
+                 << incident->getPriority() << ","
+                 << incident->getDescription() << std::endl;
+        }
+    }
+    
+    file.close();
+    std::cout << "Active incidents saved to " << filename << std::endl;
+}
+
+void IncidentQueue::generateTestIncidents(int count, Graph &graph) {
+    std::cout << "\nGenerating " << count << " Test Incidents" << std::endl;
+    
+    if (count <= 0) {
+        std::cout << "Invalid count!" << std::endl;
+        return;
+    }
+    
+    auto nodes = graph.getAllNodes();
+    if (nodes.empty()) {
+        std::cout << "No nodes in graph! Load a map first." << std::endl;
+        return;
+    }
+    
+    std::vector<std::string> priorities = {"HIGH", "MEDIUM", "LOW"};
+    std::vector<std::string> incidentTypes = {
+        "Car Accident", "Medical Emergency", "Fire", 
+        "Gas Leak", "Building Collapse", "Traffic Jam",
+        "Flood", "Power Outage", "Chemical Spill", "Rescue Needed"
+    };
+    
+    std::vector<std::string> locationsDesc = {
+        "Main Street", "Highway", "Residential Area", "Commercial District",
+        "Industrial Zone", "Park", "Bridge", "Tunnel", "Intersection"
+    };
+    
+    int generated = 0;
+    for (int i = 0; i < count; i++) {
+        int location = nodes[std::rand() % nodes.size()];
+        std::string priority = priorities[std::rand() % priorities.size()];
+        
+        std::string incidentType = incidentTypes[std::rand() % incidentTypes.size()];
+        std::string locationDesc = locationsDesc[std::rand() % locationsDesc.size()];
+        std::string severity;
+        
+        if (priority == "HIGH") {
+            severity = "Severe";
+        } else if (priority == "MEDIUM") {
+            severity = "Moderate";
+        } else {
+            severity = "Minor";
+        }
+        
+        std::string description = severity + " " + incidentType + " at " + locationDesc;
+        
+        addIncident(location, priority, description);
+        generated++;
+    }
+    
+    std::cout << "Generated " << generated << " test incidents." << std::endl;
+    
+    std::cout << "\nPriority Distribution:" << std::endl;
+    int highCount = 0, mediumCount = 0, lowCount = 0;
+    for (auto incident : allIncidents) {
+        if (incident->getPriority() == "HIGH") highCount++;
+        else if (incident->getPriority() == "MEDIUM") mediumCount++;
+        else lowCount++;
+    }
+    
+    std::cout << "  HIGH: " << highCount << " incidents" << std::endl;
+    std::cout << "  MEDIUM: " << mediumCount << " incidents" << std::endl;
+    std::cout << "  LOW: " << lowCount << " incidents" << std::endl;
+}
+
+void IncidentQueue::clearAll() {
+    while (!pq.empty()) {
+        pq.pop();
+    }
+    
+    for (auto incident : allIncidents) {
+        delete incident;
+    }
+    allIncidents.clear();
+    
+    std::cout << "All incidents cleared from memory." << std::endl;
 }

@@ -1,8 +1,6 @@
 #include "Ambulance.h"
 #include <iostream>
 
-using namespace std;
-
 Ambulance::Ambulance(int ambId, int loc) {
     id = ambId;
     location = loc;
@@ -10,12 +8,25 @@ Ambulance::Ambulance(int ambId, int loc) {
     assignedIncidentId = -1;
 }
 
-int Ambulance::getId() const { return id; }
-int Ambulance::getLocation() const { return location; }
-string Ambulance::getStatus() const { return status; }
-int Ambulance::getAssignedIncident() const { return assignedIncidentId; }
+int Ambulance::getId() const { 
+    return id; 
+}
 
-bool Ambulance::isAvailable() const { return status == "AVAILABLE"; }
+int Ambulance::getLocation() const { 
+    return location; 
+}
+
+std::string Ambulance::getStatus() const { 
+    return status; 
+}
+
+int Ambulance::getAssignedIncident() const { 
+    return assignedIncidentId; 
+}
+
+bool Ambulance::isAvailable() const { 
+    return status == "AVAILABLE"; 
+}
 
 void Ambulance::dispatchTo(int incidentId) {
     assignedIncidentId = incidentId;
@@ -32,10 +43,10 @@ void Ambulance::setLocation(int loc) {
 }
 
 void Ambulance::display() const {
-    cout << "Ambulance #" << id << " at Node " << location 
-         << " [" << status << "]";
+    std::cout << "Ambulance #" << id << " at Node " << location 
+              << " [" << status << "]";
     if (assignedIncidentId != -1) {
-        cout << " -> Incident #" << assignedIncidentId;
+        std::cout << " -> Incident #" << assignedIncidentId;
     }
-    cout << endl;
+    std::cout << std::endl;
 }
