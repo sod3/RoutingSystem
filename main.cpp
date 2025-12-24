@@ -27,16 +27,25 @@ void runDemo() {
     std::cout << "\n3. LOADING INCIDENTS..." << std::endl;
     IncidentQueue incidents;
     incidents.loadFromFile("incidents.txt", cityGraph);
+
+    // Loads the city map (road network)
+    // Loads ambulance fleet
+    // Loads emergency incidents
     
     std::cout << "\n4. DEMO: SHORTEST PATH CALCULATION" << std::endl;
     std::cout << "Calculating shortest path from Node 0 to Node 3..." << std::endl;
     int distance = cityGraph.dijkstra(0, 3);
     std::cout << "Shortest distance: " << distance << " units" << std::endl;
+    // Calculates shortest route between two locations
+    // Shows: Dijkstra's algorithm in action
+    // Output: "Shortest distance: X units"
     
     std::cout << "\n5. DEMO: BLOCKED ROAD SCENARIO" << std::endl;
     std::cout << "Blocking road between Node 0 and Node 1..." << std::endl;
     cityGraph.markRoadBlocked(0, 1);
     cityGraph.displayBlockedRoads();
+    // Simulates: Real-world road closures (accidents, construction)
+    // Teaches: System adapts to changing conditions
     
     std::cout << "\nRecalculating path with blocked road..." << std::endl;
     distance = cityGraph.dijkstraWithBlocked(0, 3);
@@ -45,7 +54,7 @@ void runDemo() {
     } else {
         std::cout << "Shortest distance (with blocked roads): " << distance << " units" << std::endl;
     }
-    
+
     std::cout << "\n6. DEMO: NEAREST AMBULANCE LOOKUP" << std::endl;
     std::cout << "Looking for nearest ambulance to Node 2..." << std::endl;
     Ambulance* nearest = rm.findNearestAmbulance(2, cityGraph);
@@ -89,6 +98,10 @@ void runDemo() {
             }
         }
     }
+// Handles emergencies from queue
+// Assigns ambulances
+// Marks incidents as resolved
+// Handles when no ambulances available
     
     std::cout << "\n9. DEMO: TEST INCIDENT GENERATION" << std::endl;
     std::cout << "Generating 5 test incidents..." << std::endl;
@@ -113,6 +126,10 @@ void runDemo() {
     incidents.displayAll();
     
     std::cout << "Active incidents: " << incidents.getActiveCount() << std::endl;
+
+    // Generates random test incidents
+    // Saves all data to backup files
+    // Shows final system status
     
     std::cout << "DEMO COMPLETE!" << std::endl;
     

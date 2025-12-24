@@ -1,5 +1,6 @@
 #include "Ambulance.h"
 #include <iostream>
+using namespace std;
 
 Ambulance::Ambulance(int ambId, int loc) {
     id = ambId;
@@ -43,10 +44,5 @@ void Ambulance::setLocation(int loc) {
 }
 
 void Ambulance::display() const {
-    std::cout << "Ambulance #" << id << " at Node " << location 
-              << " [" << status << "]";
-    if (assignedIncidentId != -1) {
-        std::cout << " -> Incident #" << assignedIncidentId;
-    }
-    std::cout << std::endl;
+    cout << "Ambulance #" << id << ", Location: " << location << ", Status: " << status << endl;
 }

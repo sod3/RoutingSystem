@@ -9,6 +9,7 @@
 
 ResourceManager::ResourceManager() {}
 
+// The auto keyword in C++ automatically deduces the type of a variable from its initializer
 ResourceManager::~ResourceManager() {
     for (auto amb : ambulances) {
         delete amb;
@@ -26,6 +27,12 @@ void ResourceManager::addAmbulance(int id, int location) {
     ambulances.push_back(new Ambulance(id, location));
     std::cout << "Added Ambulance #" << id << " at Node " << location << std::endl;
 }
+// Adds a new ambulance to the fleet
+
+// Checks if ambulance ID already exists (no duplicates allowed)
+// If not, creates new Ambulance object and adds to vector
+// Prints confirmation message
+// Data Structure Used: Vector (dynamic array)
 
 void ResourceManager::addAmbulanceInteractive() {
     int id, location;
@@ -38,6 +45,8 @@ void ResourceManager::addAmbulanceInteractive() {
     
     addAmbulance(id, location);
 }
+// Asks user for ID and location
+// Calls addAmbulance() with those values
 
 bool ResourceManager::removeAmbulance(int id) {
     for (auto it = ambulances.begin(); it != ambulances.end(); ++it) {
@@ -58,6 +67,12 @@ bool ResourceManager::removeAmbulance(int id) {
     std::cout << "Ambulance #" << id << " not found!" << std::endl;
     return false;
 }
+// Removes an ambulance from the fleet
+// Searches for ambulance by ID
+// Checks if it's available (can't remove busy ambulances)
+// If found and available, deletes it and removes from vector
+// Returns true if successful, false otherwise
+// Algorithm: Linear search through vector
 
 Ambulance* ResourceManager::findNearestAmbulance(int incidentLocation, Graph &graph) {
     Ambulance* nearest = nullptr;
@@ -75,6 +90,14 @@ Ambulance* ResourceManager::findNearestAmbulance(int incidentLocation, Graph &gr
     
     return nearest;
 }
+// Finds the closest available ambulance to an incident
+
+// Loops through all ambulances
+// Checks which ones are available
+// Uses Dijkstra's algorithm (in Graph class) to find distances
+// Returns the ambulance with shortest distance
+// Returns nullptr if no ambulances available
+// Algorithm: Uses Dijkstra's shortest path algorithm
 
 Ambulance* ResourceManager::findAmbulanceById(int id) {
     for (auto amb : ambulances) {
@@ -84,6 +107,8 @@ Ambulance* ResourceManager::findAmbulanceById(int id) {
     }
     return nullptr;
 }
+// Purpose: Finds ambulance by its ID number
+// What it does: Linear search through vector, returns pointer or nullptr
 
 bool ResourceManager::dispatchAmbulance(int ambulanceId, int incidentId, int incidentLocation) {
     Ambulance* ambulance = findAmbulanceById(ambulanceId);
@@ -101,6 +126,12 @@ bool ResourceManager::dispatchAmbulance(int ambulanceId, int incidentId, int inc
     std::cout << "Dispatched Ambulance #" << ambulanceId << " to Incident #" << incidentId << std::endl;
     return true;
 }
+// Sends an ambulance to an incident
+// What it does:
+// Finds the ambulance
+// Checks if it's available
+// If yes, marks it as dispatched to that incident
+// Returns success/failure status
 
 void ResourceManager::completeAssignment(int ambulanceId) {
     Ambulance* ambulance = findAmbulanceById(ambulanceId);
@@ -111,6 +142,8 @@ void ResourceManager::completeAssignment(int ambulanceId) {
                   << incidentId << std::endl;
     }
 }
+// Purpose: Marks an ambulance as finished with its assignment
+// What it does: Sets ambulance status back to available
 
 void ResourceManager::reassignAmbulances(IncidentQueue &incidents, Graph &graph) {
     std::cout << "\nReassigning Ambulances" << std::endl;
@@ -156,6 +189,13 @@ void ResourceManager::reassignAmbulances(IncidentQueue &incidents, Graph &graph)
     
     std::cout << "Completed " << reassignments << " reassignments." << std::endl;
 }
+// Reassigns ambulances to incidents optimally
+// What it does:
+// Gets all unresolved incidents from queue
+// For each incident, finds nearest available ambulance
+// Reassigns that ambulance to the incident
+// Keeps log of all reassignments
+// Puts incidents back in queue
 
 std::vector<Ambulance*> ResourceManager::getAllAmbulances() {
     return ambulances;
