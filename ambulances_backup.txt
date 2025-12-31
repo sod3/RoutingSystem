@@ -1,5 +1,3 @@
-# Ambulance data: ID Location
-# Saved by Emergency Routing System
 0 1
 1 1
 2 2

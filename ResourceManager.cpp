@@ -7,9 +7,10 @@
 #include <climits>
 #include <algorithm>
 
+using namespace std;
+
 ResourceManager::ResourceManager() {}
 
-// The auto keyword in C++ automatically deduces the type of a variable from its initializer
 ResourceManager::~ResourceManager() {
     for (auto amb : ambulances) {
         delete amb;
@@ -20,282 +21,224 @@ ResourceManager::~ResourceManager() {
 void ResourceManager::addAmbulance(int id, int location) {
     for (auto amb : ambulances) {
         if (amb->getId() == id) {
-            std::cout << "Ambulance #" << id << " already exists!" << std::endl;
+            cout << "Ambulance already exists\n";
             return;
         }
     }
-    ambulances.push_back(new Ambulance(id, location));
-    std::cout << "Added Ambulance #" << id << " at Node " << location << std::endl;
-}
-// Adds a new ambulance to the fleet
 
-// Checks if ambulance ID already exists (no duplicates allowed)
-// If not, creates new Ambulance object and adds to vector
-// Prints confirmation message
-// Data Structure Used: Vector (dynamic array)
+    ambulances.push_back(new Ambulance(id, location));
+    cout << "Ambulance added\n";
+}
 
 void ResourceManager::addAmbulanceInteractive() {
     int id, location;
-    
-    std::cout << "Enter ambulance ID: ";
-    std::cin >> id;
-    
-    std::cout << "Enter starting location (node): ";
-    std::cin >> location;
-    
+
+    cout << "Enter ID: ";
+    cin >> id;
+
+    cout << "Enter location: ";
+    cin >> location;
+
     addAmbulance(id, location);
 }
-// Asks user for ID and location
-// Calls addAmbulance() with those values
 
 bool ResourceManager::removeAmbulance(int id) {
-    for (auto it = ambulances.begin(); it != ambulances.end(); ++it) {
+    for (auto it = ambulances.begin(); it != ambulances.end(); it++) {
         if ((*it)->getId() == id) {
             if (!(*it)->isAvailable()) {
-                std::cout << "Cannot remove Ambulance #" << id << " - currently assigned to Incident #" 
-                          << (*it)->getAssignedIncident() << std::endl;
+                cout << "Ambulance is busy\n";
                 return false;
             }
-            
+
             delete *it;
             ambulances.erase(it);
-            std::cout << "Removed Ambulance #" << id << std::endl;
+            cout << "Ambulance removed\n";
             return true;
         }
     }
-    
-    std::cout << "Ambulance #" << id << " not found!" << std::endl;
+
+    cout << "Ambulance not found\n";
     return false;
 }
-// Removes an ambulance from the fleet
-// Searches for ambulance by ID
-// Checks if it's available (can't remove busy ambulances)
-// If found and available, deletes it and removes from vector
-// Returns true if successful, false otherwise
-// Algorithm: Linear search through vector
 
 Ambulance* ResourceManager::findNearestAmbulance(int incidentLocation, Graph &graph) {
     Ambulance* nearest = nullptr;
-    int closest = INT_MAX;
-    
+    int minDist = INT_MAX;
+
     for (auto amb : ambulances) {
         if (amb->isAvailable()) {
             int dist = graph.dijkstra(amb->getLocation(), incidentLocation);
-            if (dist < closest) {
-                closest = dist;
+            if (dist < minDist) {
+                minDist = dist;
                 nearest = amb;
             }
         }
     }
-    
+
     return nearest;
 }
-// Finds the closest available ambulance to an incident
-
-// Loops through all ambulances
-// Checks which ones are available
-// Uses Dijkstra's algorithm (in Graph class) to find distances
-// Returns the ambulance with shortest distance
-// Returns nullptr if no ambulances available
-// Algorithm: Uses Dijkstra's shortest path algorithm
 
 Ambulance* ResourceManager::findAmbulanceById(int id) {
     for (auto amb : ambulances) {
-        if (amb->getId() == id) {
+        if (amb->getId() == id)
             return amb;
-        }
     }
     return nullptr;
 }
-// Purpose: Finds ambulance by its ID number
-// What it does: Linear search through vector, returns pointer or nullptr
 
 bool ResourceManager::dispatchAmbulance(int ambulanceId, int incidentId, int incidentLocation) {
-    Ambulance* ambulance = findAmbulanceById(ambulanceId);
-    if (!ambulance) {
-        std::cout << "Ambulance #" << ambulanceId << " not found!" << std::endl;
+    Ambulance* amb = findAmbulanceById(ambulanceId);
+
+    if (!amb) {
+        cout << "Ambulance not found\n";
         return false;
     }
-    
-    if (!ambulance->isAvailable()) {
-        std::cout << "Ambulance #" << ambulanceId << " is not available!" << std::endl;
+
+    if (!amb->isAvailable()) {
+        cout << "Ambulance not available\n";
         return false;
     }
-    
-    ambulance->dispatchTo(incidentId);
-    std::cout << "Dispatched Ambulance #" << ambulanceId << " to Incident #" << incidentId << std::endl;
+
+    amb->dispatchTo(incidentId);
+    cout << "Ambulance dispatched\n";
     return true;
 }
-// Sends an ambulance to an incident
-// What it does:
-// Finds the ambulance
-// Checks if it's available
-// If yes, marks it as dispatched to that incident
-// Returns success/failure status
 
 void ResourceManager::completeAssignment(int ambulanceId) {
-    Ambulance* ambulance = findAmbulanceById(ambulanceId);
-    if (ambulance) {
-        int incidentId = ambulance->getAssignedIncident();
-        ambulance->setAvailable();
-        std::cout << "Ambulance #" << ambulanceId << " completed assignment to Incident #" 
-                  << incidentId << std::endl;
+    Ambulance* amb = findAmbulanceById(ambulanceId);
+
+    if (amb) {
+        amb->setAvailable();
+        cout << "Assignment completed\n";
     }
 }
-// Purpose: Marks an ambulance as finished with its assignment
-// What it does: Sets ambulance status back to available
 
 void ResourceManager::reassignAmbulances(IncidentQueue &incidents, Graph &graph) {
-    std::cout << "\nReassigning Ambulances" << std::endl;
-    
-    std::vector<Incident*> activeIncidents;
-    std::vector<Ambulance*> busyAmbulances;
-    
+    cout << "\nReassigning...\n";
+
     if (incidents.isEmpty()) {
-        std::cout << "No incidents to reassign." << std::endl;
+        cout << "No incidents\n";
         return;
     }
-    
-    int reassignments = 0;
-    
+
+    vector<Incident*> temp;
+    int count = 0;
+
     while (!incidents.isEmpty()) {
-        Incident* incident = incidents.getNextIncident();
-        if (incident && !incident->isResolved()) {
-            activeIncidents.push_back(incident);
-            
-            Ambulance* nearest = findNearestAmbulance(incident->getLocation(), graph);
-            if (nearest) {
-                int oldAssignment = nearest->getAssignedIncident();
-                nearest->dispatchTo(incident->getId());
-                nearest->setLocation(incident->getLocation());
-                
-                std::cout << "Reassigned Ambulance #" << nearest->getId() 
-                         << " to Incident #" << incident->getId() << " at Node " 
-                         << incident->getLocation() << std::endl;
-                
-                reassignmentLog.push_back(std::make_pair(nearest->getId(), incident->getId()));
-                reassignments++;
-                
-                if (oldAssignment != -1) {
-                    std::cout << "  (Was assigned to Incident #" << oldAssignment << ")" << std::endl;
-                }
+        Incident* inc = incidents.getNextIncident();
+        if (inc && !inc->isResolved()) {
+            temp.push_back(inc);
+
+            Ambulance* amb = findNearestAmbulance(inc->getLocation(), graph);
+            if (amb) {
+                amb->dispatchTo(inc->getId());
+                amb->setLocation(inc->getLocation());
+
+                reassignmentLog.push_back({amb->getId(), inc->getId()});
+                count++;
             }
         }
     }
-    
-    for (auto incident : activeIncidents) {
-        incidents.reAddIncident(incident);
-    }
-    
-    std::cout << "Completed " << reassignments << " reassignments." << std::endl;
-}
-// Reassigns ambulances to incidents optimally
-// What it does:
-// Gets all unresolved incidents from queue
-// For each incident, finds nearest available ambulance
-// Reassigns that ambulance to the incident
-// Keeps log of all reassignments
-// Puts incidents back in queue
 
-std::vector<Ambulance*> ResourceManager::getAllAmbulances() {
+    for (auto inc : temp)
+        incidents.reAddIncident(inc);
+
+    cout << "Done (" << count << " reassigned)\n";
+}
+
+vector<Ambulance*> ResourceManager::getAllAmbulances() {
     return ambulances;
 }
 
-std::vector<Ambulance*> ResourceManager::getAvailableAmbulances() {
-    std::vector<Ambulance*> available;
+vector<Ambulance*> ResourceManager::getAvailableAmbulances() {
+    vector<Ambulance*> list;
     for (auto amb : ambulances) {
-        if (amb->isAvailable()) {
-            available.push_back(amb);
-        }
+        if (amb->isAvailable())
+            list.push_back(amb);
     }
-    return available;
+    return list;
 }
 
 int ResourceManager::getAvailableCount() {
-    int count = 0;
+    int c = 0;
     for (auto amb : ambulances) {
-        if (amb->isAvailable()) {
-            count++;
-        }
+        if (amb->isAvailable())
+            c++;
     }
-    return count;
+    return c;
 }
 
 void ResourceManager::displayAll() {
-    std::cout << "\nAmbulance Status" << std::endl;
+    cout << "\nAmbulances:\n";
+
     if (ambulances.empty()) {
-        std::cout << "No ambulances registered." << std::endl;
+        cout << "None\n";
         return;
     }
-    
-    for (auto amb : ambulances) {
+
+    for (auto amb : ambulances)
         amb->display();
-    }
-    std::cout << "Available: " << getAvailableCount() << "/" << ambulances.size() << std::endl;
+
+    cout << "Available: " << getAvailableCount() << "/" << ambulances.size() << endl;
 }
 
 void ResourceManager::displayReassignmentLog() {
-    std::cout << "\nReassignment History" << std::endl;
+    cout << "\nReassignments:\n";
+
     if (reassignmentLog.empty()) {
-        std::cout << "No reassignments recorded." << std::endl;
+        cout << "No history\n";
         return;
     }
-    
-    for (const auto& log : reassignmentLog) {
-        std::cout << "Ambulance #" << log.first << " -> Incident #" << log.second << std::endl;
+
+    for (auto log : reassignmentLog) {
+        cout << log.first << " -> " << log.second << endl;
     }
-    std::cout << "Total reassignments: " << reassignmentLog.size() << std::endl;
 }
 
-void ResourceManager::loadFromFile(const std::string &filename) {
-    std::ifstream file(filename);
-    std::string line;
-    
+void ResourceManager::loadFromFile(const string &filename) {
+    ifstream file(filename);
+
     if (!file.is_open()) {
-        std::cout << "Can't open " << filename << std::endl;
+        cout << "File error\n";
         return;
     }
-    
-    for (auto amb : ambulances) {
+
+    for (auto amb : ambulances)
         delete amb;
-    }
     ambulances.clear();
-    
+
+    string line;
     while (getline(file, line)) {
-        if (line.empty() || line[0] == '#') continue;
-        
+        if (line.empty() || line[0] == '#')
+            continue;
+
         auto parts = split(line, ' ');
         if (parts.size() >= 2) {
-            int id = std::stoi(parts[0]);
-            int location = std::stoi(parts[1]);
-            addAmbulance(id, location);
+            addAmbulance(stoi(parts[0]), stoi(parts[1]));
         }
     }
-    
+
     file.close();
-    std::cout << "Ambulances loaded from " << filename << std::endl;
+    cout << "Loaded from file\n";
 }
 
-void ResourceManager::saveToFile(const std::string &filename) {
-    std::ofstream file(filename);
-    
+void ResourceManager::saveToFile(const string &filename) {
+    ofstream file(filename);
+
     if (!file.is_open()) {
-        std::cout << "Can't create " << filename << std::endl;
+        cout << "Save failed\n";
         return;
     }
-    
-    file << "# Ambulance data: ID Location" << std::endl;
-    file << "# Saved by Emergency Routing System" << std::endl;
-    
+
     for (auto amb : ambulances) {
-        file << amb->getId() << " " << amb->getLocation() << std::endl;
+        file << amb->getId() << " " << amb->getLocation() << endl;
     }
-    
+
     file.close();
-    std::cout << "Ambulance fleet saved to " << filename << std::endl;
+    cout << "Saved\n";
 }
 
 void ResourceManager::clearReassignmentLog() {
     reassignmentLog.clear();
-    std::cout << "Reassignment log cleared." << std::endl;
+    cout << "Log cleared\n";
 }

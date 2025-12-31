@@ -1,5 +1,3 @@
-# Graph data: source destination weight
-# Saved by Emergency Routing System
 0 1 10
 0 2 20
 0 3 15

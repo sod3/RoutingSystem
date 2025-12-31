@@ -2,11 +2,12 @@
 #define AMBULANCE_H
 
 #include <string>
+using namespace std;
 
 class Ambulance {
     int id;
     int location;
-    std::string status;
+    string status;
     int assignedIncidentId;
     
 public:
@@ -14,7 +15,7 @@ public:
     
     int getId() const;
     int getLocation() const;
-    std::string getStatus() const;
+    string getStatus() const;
     int getAssignedIncident() const;
     
     bool isAvailable() const;

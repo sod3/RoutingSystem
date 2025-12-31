@@ -8,10 +8,8 @@
 
 using namespace std;
 
-// Split string by delimiter
 vector<string> split(const string &str, char delimiter);
 
-// Print vector
 template<typename T>
 void printVector(const vector<T> &vec, const string &name = "") {
     if (!name.empty()) {

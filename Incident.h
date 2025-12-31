@@ -4,23 +4,24 @@
 #include <queue>
 #include <vector>
 #include <string>
+using namespace std;
 
 class Graph;
 
 class Incident {
     int id;
     int location;
-    std::string priority;
-    std::string description;
+    string priority;
+    string description;
     bool resolved;
 
 public:
-    Incident(int loc, const std::string &pri, const std::string &desc);
+    Incident(int loc, const string &pri, const string &desc);
     
     int getId() const;
     int getLocation() const;
-    std::string getPriority() const;
-    std::string getDescription() const;
+    string getPriority() const;
+    string getDescription() const;
     bool isResolved() const;
     int getPriorityValue() const;
     
@@ -33,22 +34,22 @@ struct CompareIncidentPriority {
 };
 
 class IncidentQueue {
-    std::priority_queue<Incident*, std::vector<Incident*>, CompareIncidentPriority> pq;
-    std::vector<Incident*> allIncidents;
+    priority_queue<Incident*, vector<Incident*>, CompareIncidentPriority> pq;
+    vector<Incident*> allIncidents;
     
 public:
     IncidentQueue();
     ~IncidentQueue();
     
-    void addIncident(int location, const std::string &priority, const std::string &description);
+    void addIncident(int location, const string &priority, const string &description);
     void reAddIncident(Incident* inc);
     Incident* getNextIncident();
     bool isEmpty() const;
     int size() const;
     int getActiveCount() const;
     void displayAll() const;
-    void loadFromFile(const std::string &filename, Graph &graph);
-    void saveToFile(const std::string &filename) const;
+    void loadFromFile(const string &filename, Graph &graph);
+    void saveToFile(const string &filename) const;
     void generateTestIncidents(int count, Graph &graph);
     void clearAll();
 };

@@ -4,10 +4,12 @@
 #include <fstream>
 #include <algorithm>
 
+using namespace std;
+
 Graph::Graph() {}
 
 void Graph::addNode(int nodeId) {
-    if (std::find(nodes.begin(), nodes.end(), nodeId) == nodes.end()) {
+    if (find(nodes.begin(), nodes.end(), nodeId) == nodes.end()) {
         nodes.push_back(nodeId);
     }
 }
@@ -15,253 +17,229 @@ void Graph::addNode(int nodeId) {
 void Graph::addEdge(int src, int dest, int weight) {
     addNode(src);
     addNode(dest);
-    adjList[src].push_back(std::make_pair(dest, weight));
-    adjList[dest].push_back(std::make_pair(src, weight));
+
+    adjList[src].push_back({dest, weight});
+    adjList[dest].push_back({src, weight});
 }
 
 void Graph::updateEdgeWeight(int src, int dest, int newWeight) {
-    bool updated = false;
-    
-    for (auto& neighbor : adjList[src]) {
-        if (neighbor.first == dest) {
-            neighbor.second = newWeight;
-            updated = true;
+    bool found = false;
+
+    for (auto &n : adjList[src]) {
+        if (n.first == dest) {
+            n.second = newWeight;
+            found = true;
             break;
         }
     }
-    
-    for (auto& neighbor : adjList[dest]) {
-        if (neighbor.first == src) {
-            neighbor.second = newWeight;
+
+    for (auto &n : adjList[dest]) {
+        if (n.first == src) {
+            n.second = newWeight;
             break;
         }
     }
-    
-    if (updated) {
-        std::cout << "Updated road weight between " << src << " and " << dest 
-                  << " to " << newWeight << std::endl;
-    } else {
-        std::cout << "Road between " << src << " and " << dest 
-                  << " not found!" << std::endl;
-    }
+
+    if (found)
+        cout << "Road updated\n";
+    else
+        cout << "Road not found\n";
 }
 
 void Graph::markRoadBlocked(int src, int dest) {
-    blockedRoads[std::make_pair(std::min(src, dest), std::max(src, dest))] = true;
-    std::cout << "Road between " << src << " and " << dest << " marked as BLOCKED" << std::endl;
+    blockedRoads[{min(src, dest), max(src, dest)}] = true;
+    cout << "Road blocked\n";
 }
 
 void Graph::markRoadOpen(int src, int dest) {
-    auto key = std::make_pair(std::min(src, dest), std::max(src, dest));
-    blockedRoads.erase(key);
-    std::cout << "Road between " << src << " and " << dest << " marked as OPEN" << std::endl;
+    blockedRoads.erase({min(src, dest), max(src, dest)});
+    cout << "Road opened\n";
 }
 
 bool Graph::isRoadBlocked(int src, int dest) const {
-    auto key = std::make_pair(std::min(src, dest), std::max(src, dest));
-    return blockedRoads.find(key) != blockedRoads.end();
+    return blockedRoads.find({min(src, dest), max(src, dest)}) != blockedRoads.end();
 }
 
-std::vector<std::pair<int, int>> Graph::getNeighbors(int node) {
+vector<pair<int, int>> Graph::getNeighbors(int node) {
     return adjList[node];
 }
 
-std::vector<int> Graph::getAllNodes() {
+vector<int> Graph::getAllNodes() {
     return nodes;
 }
 
 int Graph::dijkstra(int start, int end) {
-    if (start == end) return 0;
-    
-    std::priority_queue<std::pair<int, int>, 
-                        std::vector<std::pair<int, int>>, 
-                        std::greater<std::pair<int, int>>> pq;
-    
-    std::map<int, int> dist;
-    for (int node : nodes) {
-        dist[node] = INT_MAX;
-    }
-    
+    if (start == end)
+        return 0;
+
+    priority_queue<pair<int, int>,
+                   vector<pair<int, int>>,
+                   greater<pair<int, int>>> pq;
+
+    map<int, int> dist;
+    for (int n : nodes)
+        dist[n] = INT_MAX;
+
     dist[start] = 0;
-    pq.push(std::make_pair(0, start));
-    
+    pq.push({0, start});
+
     while (!pq.empty()) {
-        int currentDist = pq.top().first;
-        int currentNode = pq.top().second;
+        int d = pq.top().first;
+        int u = pq.top().second;
         pq.pop();
-        
-        if (currentNode == end) {
-            return currentDist;
-        }
-        
-        if (currentDist > dist[currentNode]) {
+
+        if (u == end)
+            return d;
+
+        if (d > dist[u])
             continue;
-        }
-        
-        for (auto neighbor : adjList[currentNode]) {
-            int nextNode = neighbor.first;
-            int weight = neighbor.second;
-            
-            int newDist = currentDist + weight;
-            
-            if (newDist < dist[nextNode]) {
-                dist[nextNode] = newDist;
-                pq.push(std::make_pair(newDist, nextNode));
+
+        for (auto nb : adjList[u]) {
+            int v = nb.first;
+            int w = nb.second;
+
+            if (d + w < dist[v]) {
+                dist[v] = d + w;
+                pq.push({dist[v], v});
             }
         }
     }
-    
+
     return INT_MAX;
 }
 
 int Graph::dijkstraWithBlocked(int start, int end) {
-    if (start == end) return 0;
-    
-    std::priority_queue<std::pair<int, int>, 
-                        std::vector<std::pair<int, int>>, 
-                        std::greater<std::pair<int, int>>> pq;
-    
-    std::map<int, int> dist;
-    for (int node : nodes) {
-        dist[node] = INT_MAX;
-    }
-    
+    if (start == end)
+        return 0;
+
+    priority_queue<pair<int, int>,
+                   vector<pair<int, int>>,
+                   greater<pair<int, int>>> pq;
+
+    map<int, int> dist;
+    for (int n : nodes)
+        dist[n] = INT_MAX;
+
     dist[start] = 0;
-    pq.push(std::make_pair(0, start));
-    
+    pq.push({0, start});
+
     while (!pq.empty()) {
-        int currentDist = pq.top().first;
-        int currentNode = pq.top().second;
+        int d = pq.top().first;
+        int u = pq.top().second;
         pq.pop();
-        
-        if (currentNode == end) {
-            return currentDist;
-        }
-        
-        if (currentDist > dist[currentNode]) {
+
+        if (u == end)
+            return d;
+
+        if (d > dist[u])
             continue;
-        }
-        
-        for (auto neighbor : adjList[currentNode]) {
-            int nextNode = neighbor.first;
-            int weight = neighbor.second;
-            
-            if (isRoadBlocked(currentNode, nextNode)) {
+
+        for (auto nb : adjList[u]) {
+            int v = nb.first;
+            int w = nb.second;
+
+            if (isRoadBlocked(u, v))
                 continue;
-            }
-            
-            int newDist = currentDist + weight;
-            
-            if (newDist < dist[nextNode]) {
-                dist[nextNode] = newDist;
-                pq.push(std::make_pair(newDist, nextNode));
+
+            if (d + w < dist[v]) {
+                dist[v] = d + w;
+                pq.push({dist[v], v});
             }
         }
     }
-    
+
     return INT_MAX;
 }
 
-void Graph::loadFromFile(const std::string &filename) {
-    std::ifstream file(filename);
-    std::string line;
-    
+void Graph::loadFromFile(const string &filename) {
+    ifstream file(filename);
+
     if (!file.is_open()) {
-        std::cout << "Error: Cannot open file " << filename << std::endl;
+        cout << "File error\n";
         return;
     }
-    
+
+    string line;
     while (getline(file, line)) {
-        if (line.empty() || line[0] == '#') continue;
-        
-        std::vector<std::string> parts = split(line, ' ');
+        if (line.empty() || line[0] == '#')
+            continue;
+
+        auto parts = split(line, ' ');
         if (parts.size() >= 3) {
-            int src = std::stoi(parts[0]);
-            int dest = std::stoi(parts[1]);
-            int weight = std::stoi(parts[2]);
-            
-            addEdge(src, dest, weight);
+            addEdge(stoi(parts[0]), stoi(parts[1]), stoi(parts[2]));
         }
     }
-    
+
     file.close();
-    std::cout << "Graph loaded from " << filename << " with " << nodes.size() << " nodes." << std::endl;
+    cout << "Graph loaded\n";
 }
 
-void Graph::saveToFile(const std::string &filename) {
-    std::ofstream file(filename);
-    
+void Graph::saveToFile(const string &filename) {
+    ofstream file(filename);
+
     if (!file.is_open()) {
-        std::cout << "Error: Cannot create file " << filename << std::endl;
+        cout << "Save failed\n";
         return;
     }
-    
-    file << "# Graph data: source destination weight" << std::endl;
-    file << "# Saved by Emergency Routing System" << std::endl;
-    
-    std::map<std::pair<int, int>, bool> writtenEdges;
-    
-    for (int node : nodes) {
-        for (auto neighbor : adjList[node]) {
-            int src = std::min(node, neighbor.first);
-            int dest = std::max(node, neighbor.first);
-            auto edgeKey = std::make_pair(src, dest);
-            
-            if (writtenEdges.find(edgeKey) == writtenEdges.end()) {
-                file << src << " " << dest << " " << neighbor.second << std::endl;
-                writtenEdges[edgeKey] = true;
+
+    map<pair<int, int>, bool> done;
+
+    for (int n : nodes) {
+        for (auto nb : adjList[n]) {
+            int a = min(n, nb.first);
+            int b = max(n, nb.first);
+
+            if (!done[{a, b}]) {
+                file << a << " " << b << " " << nb.second << endl;
+                done[{a, b}] = true;
             }
         }
     }
-    
+
     file.close();
-    std::cout << "Graph saved to " << filename << std::endl;
+    cout << "Graph saved\n";
 }
 
 void Graph::display() {
-    std::cout << "\nGraph Structure" << std::endl;
-    std::cout << "Total Nodes: " << nodes.size() << std::endl;
-    
+    cout << "\nGraph\n";
+    cout << "Nodes: " << nodes.size() << endl;
+
     if (!blockedRoads.empty()) {
-        std::cout << "Blocked Roads: ";
-        for (const auto& road : blockedRoads) {
-            std::cout << road.first.first << "-" << road.first.second << " ";
-        }
-        std::cout << std::endl;
+        cout << "Blocked: ";
+        for (auto r : blockedRoads)
+            cout << r.first.first << "-" << r.first.second << " ";
+        cout << endl;
     }
-    
-    std::cout << "\nEdges:" << std::endl;
-    
-    std::map<std::pair<int, int>, bool> displayedEdges;
-    
-    for (int node : nodes) {
-        for (auto neighbor : adjList[node]) {
-            int src = std::min(node, neighbor.first);
-            int dest = std::max(node, neighbor.first);
-            auto edgeKey = std::make_pair(src, dest);
-            
-            if (displayedEdges.find(edgeKey) == displayedEdges.end()) {
-                std::cout << "Road " << src << " <-> " << dest 
-                         << " (weight: " << neighbor.second << ")";
-                if (isRoadBlocked(src, dest)) {
-                    std::cout << " [BLOCKED]";
-                }
-                std::cout << std::endl;
-                displayedEdges[edgeKey] = true;
+
+    cout << "Roads:\n";
+
+    map<pair<int, int>, bool> shown;
+    for (int n : nodes) {
+        for (auto nb : adjList[n]) {
+            int a = min(n, nb.first);
+            int b = max(n, nb.first);
+
+            if (!shown[{a, b}]) {
+                cout << a << " <-> " << b << " (" << nb.second << ")";
+                if (isRoadBlocked(a, b))
+                    cout << " X";
+                cout << endl;
+
+                shown[{a, b}] = true;
             }
         }
     }
 }
 
 void Graph::displayBlockedRoads() {
-    std::cout << "\nBlocked Roads" << std::endl;
+    cout << "\nBlocked Roads\n";
+
     if (blockedRoads.empty()) {
-        std::cout << "No roads are currently blocked." << std::endl;
+        cout << "None\n";
         return;
     }
-    
-    for (const auto& road : blockedRoads) {
-        std::cout << "Road between " << road.first.first 
-                  << " and " << road.first.second << " is BLOCKED" << std::endl;
+
+    for (auto r : blockedRoads) {
+        cout << r.first.first << " - " << r.first.second << endl;
     }
 }

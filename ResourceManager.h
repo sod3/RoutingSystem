@@ -4,13 +4,14 @@
 #include <vector>
 #include <string>
 #include "Ambulance.h"
+using namespace std;
 
 class Graph;
 class IncidentQueue;
 
 class ResourceManager {
-    std::vector<Ambulance*> ambulances;
-    std::vector<std::pair<int, int>> reassignmentLog;
+    vector<Ambulance*> ambulances;
+    vector<pair<int, int>> reassignmentLog;
     
 public:
     ResourceManager();
@@ -26,14 +27,14 @@ public:
     bool dispatchAmbulance(int ambulanceId, int incidentId, int incidentLocation);
     void completeAssignment(int ambulanceId);
     
-    std::vector<Ambulance*> getAllAmbulances();
-    std::vector<Ambulance*> getAvailableAmbulances();
+    vector<Ambulance*> getAllAmbulances();
+    vector<Ambulance*> getAvailableAmbulances();
     int getAvailableCount();
     
     void displayAll();
     void displayReassignmentLog();
-    void loadFromFile(const std::string &filename);
-    void saveToFile(const std::string &filename);
+    void loadFromFile(const string &filename);
+    void saveToFile(const string &filename);
     
     void clearReassignmentLog();
 };

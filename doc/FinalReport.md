@@ -1,4 +1,4 @@
-# Final Project Report
+# Final Project Report (Emergency Routing System)
 
 # Executive Summary
 Successfully implemented an Emergency Routing System that:
@@ -11,8 +11,8 @@ Successfully implemented an Emergency Routing System that:
 # Technical Achievements
 1. Core Algorithms Implemented:
 - Dijkstra with priority queue
-- Nearest neighbor search
-- Priority-based scheduling
+- Nearest neighbor search (Find the closest thing to me)
+- Priority-based scheduling (Handle the most important things first")
 
 2. Data Structure Mastery:
 - Custom Graph class
