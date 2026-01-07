@@ -9,149 +9,191 @@
 #include <queue>
 #include <cstdlib>
 #include <ctime>
+#include <limits>
+#include <sstream>
+
+using namespace std;
+
+// Helper function to clear invalid input
+void clearInputBuffer() {
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+}
+
+// Helper function to get integer input with validation
+int getIntegerInput(const string& prompt) {
+    int value;
+    while (true) {
+        cout << prompt;
+        cin >> value;
+        
+        if (cin.fail()) {
+            cout << "Invalid input! Please enter a valid number.\n";
+            clearInputBuffer();
+        } else {
+            clearInputBuffer();
+            return value;
+        }
+    }
+}
+
+// Helper function to get string input
+string getStringInput(const string& prompt) {
+    string value;
+    cout << prompt;
+    getline(cin, value);
+    return value;
+}
+
+// Helper function to get valid priority
+string getPriorityInput() {
+    string pri;
+    while (true) {
+        cout << "Enter priority (HIGH/MEDIUM/LOW): ";
+        getline(cin, pri);
+        
+        // Convert to uppercase for comparison
+        for (char &c : pri) {
+            c = toupper(c);
+        }
+        
+        if (pri == "HIGH" || pri == "MEDIUM" || pri == "LOW") {
+            return pri;
+        } else {
+            cout << "Invalid priority! Please enter HIGH, MEDIUM, or LOW.\n";
+        }
+    }
+}
 
 void runDemo() {
-    std::cout << "EMERGENCY ROUTING SYSTEM - LIVE DEMO" << std::endl;
+    cout << "EMERGENCY ROUTING SYSTEM - LIVE DEMO" << endl;
     
-    
-    std::cout << "\n1. LOADING CITY MAP..." << std::endl;
+    cout << "\n1. LOADING CITY MAP..." << endl;
     Graph cityGraph;
     cityGraph.loadFromFile("map_small.txt");
     cityGraph.display();
     
-    std::cout << "\n2. LOADING AMBULANCES..." << std::endl;
+    cout << "\n2. LOADING AMBULANCES..." << endl;
     ResourceManager rm;
     rm.loadFromFile("ambulances.txt");
     rm.displayAll();
     
-    std::cout << "\n3. LOADING INCIDENTS..." << std::endl;
+    cout << "\n3. LOADING INCIDENTS..." << endl;
     IncidentQueue incidents;
     incidents.loadFromFile("incidents.txt", cityGraph);
-
-    // Loads the city map (road network)
-    // Loads ambulance fleet
-    // Loads emergency incidents
     
-    std::cout << "\n4. DEMO: SHORTEST PATH CALCULATION" << std::endl;
-    std::cout << "Calculating shortest path from Node 0 to Node 3..." << std::endl;
+    cout << "\n4. DEMO: SHORTEST PATH CALCULATION" << endl;
+    cout << "Calculating shortest path from Node 0 to Node 3..." << endl;
     int distance = cityGraph.dijkstra(0, 3);
-    std::cout << "Shortest distance: " << distance << " units" << std::endl;
-    // Calculates shortest route between two locations
-    // Shows: Dijkstra's algorithm in action
-    // Output: "Shortest distance: X units"
+    cout << "Shortest distance: " << distance << " units" << endl;
     
-    std::cout << "\n5. DEMO: BLOCKED ROAD SCENARIO" << std::endl;
-    std::cout << "Blocking road between Node 0 and Node 1..." << std::endl;
+    cout << "\n5. DEMO: BLOCKED ROAD SCENARIO" << endl;
+    cout << "Blocking road between Node 0 and Node 1..." << endl;
     cityGraph.markRoadBlocked(0, 1);
     cityGraph.displayBlockedRoads();
-    // Simulates: Real-world road closures (accidents, construction)
-    // Teaches: System adapts to changing conditions
     
-    std::cout << "\nRecalculating path with blocked road..." << std::endl;
+    cout << "\nRecalculating path with blocked road..." << endl;
     distance = cityGraph.dijkstraWithBlocked(0, 3);
     if (distance == INT_MAX) {
-        std::cout << "No path available with current road closures!" << std::endl;
+        cout << "No path available with current road closures!" << endl;
     } else {
-        std::cout << "Shortest distance (with blocked roads): " << distance << " units" << std::endl;
+        cout << "Shortest distance (with blocked roads): " << distance << " units" << endl;
     }
 
-    std::cout << "\n6. DEMO: NEAREST AMBULANCE LOOKUP" << std::endl;
-    std::cout << "Looking for nearest ambulance to Node 2..." << std::endl;
+    cout << "\n6. DEMO: NEAREST AMBULANCE LOOKUP" << endl;
+    cout << "Looking for nearest ambulance to Node 2..." << endl;
     Ambulance* nearest = rm.findNearestAmbulance(2, cityGraph);
     if (nearest) {
-        std::cout << "Found: ";
+        cout << "Found: ";
         nearest->display();
         int distToIncident = cityGraph.dijkstra(nearest->getLocation(), 2);
-        std::cout << "Distance to incident: " << distToIncident << " units" << std::endl;
+        cout << "Distance to incident: " << distToIncident << " units" << endl;
     } else {
-        std::cout << "No available ambulances found!" << std::endl;
+        cout << "No available ambulances found!" << endl;
     }
     
-    std::cout << "\n7. DEMO: DYNAMIC REASSIGNMENT" << std::endl;
-    std::cout << "Reassigning ambulances based on current incidents..." << std::endl;
+    cout << "\n7. DEMO: DYNAMIC REASSIGNMENT" << endl;
+    cout << "Reassigning ambulances based on current incidents..." << endl;
     rm.reassignAmbulances(incidents, cityGraph);
     
-    std::cout << "\n8. DEMO: PROCESSING INCIDENT QUEUE" << std::endl;
+    cout << "\n8. DEMO: PROCESSING INCIDENT QUEUE" << endl;
     int processed = 0;
     while (!incidents.isEmpty() && processed < 2) {
         if (rm.getAvailableCount() == 0) {
-            std::cout << "No more available ambulances to assign." << std::endl;
+            cout << "No more available ambulances to assign." << endl;
             break;
         }
         Incident* nextIncident = incidents.getNextIncident();
         if (nextIncident) {
-            std::cout << "\nProcessing ";
+            cout << "\nProcessing ";
             nextIncident->display();
             
             Ambulance* assigned = rm.findNearestAmbulance(nextIncident->getLocation(), cityGraph);
             if (assigned) {
                 assigned->dispatchTo(nextIncident->getId());
                 int dist = cityGraph.dijkstra(assigned->getLocation(), nextIncident->getLocation());
-                std::cout << "Assigned Ambulance #" << assigned->getId() 
-                         << " (distance: " << dist << " units)" << std::endl;
+                cout << "Assigned Ambulance #" << assigned->getId() 
+                     << " (distance: " << dist << " units)" << endl;
                 assigned->setLocation(nextIncident->getLocation());
                 nextIncident->resolve();
                 processed++;
             } else {
-                std::cout << "No ambulances available. Incident will wait." << std::endl;
+                cout << "No ambulances available. Incident will wait." << endl;
                 incidents.reAddIncident(nextIncident);
             }
         }
     }
-// Handles emergencies from queue
-// Assigns ambulances
-// Marks incidents as resolved
-// Handles when no ambulances available
     
-    std::cout << "\n9. DEMO: TEST INCIDENT GENERATION" << std::endl;
-    std::cout << "Generating 5 test incidents..." << std::endl;
+    cout << "\n9. DEMO: TEST INCIDENT GENERATION" << endl;
+    cout << "Generating 5 test incidents..." << endl;
     incidents.generateTestIncidents(5, cityGraph);
     
-    std::cout << "\n10. DEMO: ADMIN FUNCTIONS" << std::endl;
-    std::cout << "Saving current configurations..." << std::endl;
+    cout << "\n10. DEMO: ADMIN FUNCTIONS" << endl;
+    cout << "Saving current configurations..." << endl;
     cityGraph.saveToFile("map_backup.txt");
     rm.saveToFile("ambulances_backup.txt");
     incidents.saveToFile("incidents_backup.txt");
     
-    std::cout << "Adding new ambulance..." << std::endl;
+    cout << "Adding new ambulance..." << endl;
     rm.addAmbulance(999, 4);
     
-    std::cout << "Updating road conditions..." << std::endl;
+    cout << "Updating road conditions..." << endl;
     cityGraph.updateEdgeWeight(2, 3, 15);
     
-    std::cout << "\n11. FINAL SYSTEM STATUS" << std::endl;
+    cout << "\n11. FINAL SYSTEM STATUS" << endl;
     cityGraph.display();
     rm.displayAll();
     rm.displayReassignmentLog();
     incidents.displayAll();
     
-    std::cout << "Active incidents: " << incidents.getActiveCount() << std::endl;
-
-    // Generates random test incidents
-    // Saves all data to backup files
-    // Shows final system status
+    cout << "Active incidents: " << incidents.getActiveCount() << endl;
     
-    std::cout << "DEMO COMPLETE!" << std::endl;
-    
+    cout << "DEMO COMPLETE!" << endl;
 }
 
 void adminMenu(ResourceManager &rm, Graph &cityGraph, IncidentQueue &incidents) {
     int choice;
     
     do {
-        std::cout << "\nADMINISTRATOR MENU" << std::endl;
-        std::cout << "1. Add New Ambulance" << std::endl;
-        std::cout << "2. Remove Ambulance" << std::endl;
-        std::cout << "3. Update Road Weight" << std::endl;
-        std::cout << "4. Block/Unblock Road" << std::endl;
-        std::cout << "5. Generate Test Incidents" << std::endl;
-        std::cout << "6. Save All Configurations" << std::endl;
-        std::cout << "7. Reassign All Ambulances" << std::endl;
-        std::cout << "8. View Reassignment Log" << std::endl;
-        std::cout << "9. Clear All Incidents" << std::endl;
-        std::cout << "10. Back to Main Menu" << std::endl;
-        std::cout << "Choice: ";
-        std::cin >> choice;
+        cout << "\nADMINISTRATOR MENU" << endl;
+        cout << "1. Add New Ambulance" << endl;
+        cout << "2. Remove Ambulance" << endl;
+        cout << "3. Update Road Weight" << endl;
+        cout << "4. Block/Unblock Road" << endl;
+        cout << "5. Generate Test Incidents" << endl;
+        cout << "6. Save All Configurations" << endl;
+        cout << "7. Reassign All Ambulances" << endl;
+        cout << "8. View Reassignment Log" << endl;
+        cout << "9. Clear All Incidents" << endl;
+        cout << "10. Back to Main Menu" << endl;
+        cout << "Choice: ";
+        
+        if (!(cin >> choice)) {
+            cout << "Invalid input! Please enter a number between 1 and 10.\n";
+            clearInputBuffer();
+            continue;
+        }
+        clearInputBuffer();
         
         switch(choice) {
             case 1:
@@ -159,47 +201,45 @@ void adminMenu(ResourceManager &rm, Graph &cityGraph, IncidentQueue &incidents) 
                 break;
                 
             case 2: {
-                int id;
-                std::cout << "Enter ambulance ID to remove: ";
-                std::cin >> id;
+                int id = getIntegerInput("Enter ambulance ID to remove: ");
                 rm.removeAmbulance(id);
                 break;
             }
                 
             case 3: {
-                int src, dest, weight;
-                std::cout << "Enter source node: ";
-                std::cin >> src;
-                std::cout << "Enter destination node: ";
-                std::cin >> dest;
-                std::cout << "Enter new weight: ";
-                std::cin >> weight;
+                int src = getIntegerInput("Enter source node: ");
+                int dest = getIntegerInput("Enter destination node: ");
+                int weight = getIntegerInput("Enter new weight: ");
                 cityGraph.updateEdgeWeight(src, dest, weight);
                 break;
             }
                 
             case 4: {
-                int src, dest;
-                std::cout << "Enter source node: ";
-                std::cin >> src;
-                std::cout << "Enter destination node: ";
-                std::cin >> dest;
-                std::cout << "1. Block Road" << std::endl;
-                std::cout << "2. Open Road" << std::endl;
+                int src = getIntegerInput("Enter source node: ");
+                int dest = getIntegerInput("Enter destination node: ");
+                cout << "1. Block Road" << endl;
+                cout << "2. Open Road" << endl;
+                
                 int action;
-                std::cin >> action;
+                if (!(cin >> action)) {
+                    cout << "Invalid input!\n";
+                    clearInputBuffer();
+                    break;
+                }
+                clearInputBuffer();
+                
                 if (action == 1) {
                     cityGraph.markRoadBlocked(src, dest);
-                } else {
+                } else if (action == 2) {
                     cityGraph.markRoadOpen(src, dest);
+                } else {
+                    cout << "Invalid choice! Please enter 1 or 2.\n";
                 }
                 break;
             }
                 
             case 5: {
-                int count;
-                std::cout << "Enter number of test incidents to generate: ";
-                std::cin >> count;
+                int count = getIntegerInput("Enter number of test incidents to generate: ");
                 incidents.generateTestIncidents(count, cityGraph);
                 break;
             }
@@ -208,7 +248,7 @@ void adminMenu(ResourceManager &rm, Graph &cityGraph, IncidentQueue &incidents) 
                 cityGraph.saveToFile("map_saved.txt");
                 rm.saveToFile("ambulances_saved.txt");
                 incidents.saveToFile("incidents_saved.txt");
-                std::cout << "All configurations saved!" << std::endl;
+                cout << "All configurations saved!" << endl;
                 break;
                 
             case 7:
@@ -224,11 +264,11 @@ void adminMenu(ResourceManager &rm, Graph &cityGraph, IncidentQueue &incidents) 
                 break;
                 
             case 10:
-                std::cout << "Returning to main menu..." << std::endl;
+                cout << "Returning to main menu..." << endl;
                 break;
                 
             default:
-                std::cout << "Invalid choice!" << std::endl;
+                cout << "Invalid choice! Please enter a number between 1 and 10.\n";
         }
         
     } while (choice != 10);
@@ -238,68 +278,60 @@ void dispatcherMenu(Graph &cityGraph, ResourceManager &rm, IncidentQueue &incide
     int choice;
     
     do {
-        std::cout << "\nDISPATCHER MENU" << std::endl;
-        std::cout << "1. Report New Incident" << std::endl;
-        std::cout << "2. Find Nearest Ambulance" << std::endl;
-        std::cout << "3. Dispatch Ambulance to Incident" << std::endl;
-        std::cout << "4. Mark Assignment Complete" << std::endl;
-        std::cout << "5. Check Road Conditions" << std::endl;
-        std::cout << "6. View System Status" << std::endl;
-        std::cout << "7. Save Current State" << std::endl;
-        std::cout << "8. Back to Main Menu" << std::endl;
-        std::cout << "Choice: ";
-        std::cin >> choice;
+        cout << "\nDISPATCHER MENU" << endl;
+        cout << "1. Report New Incident" << endl;
+        cout << "2. Find Nearest Ambulance" << endl;
+        cout << "3. Dispatch Ambulance to Incident" << endl;
+        cout << "4. Mark Assignment Complete" << endl;
+        cout << "5. Check Road Conditions" << endl;
+        cout << "6. View System Status" << endl;
+        cout << "7. Save Current State" << endl;
+        cout << "8. Back to Main Menu" << endl;
+        cout << "Choice: ";
+        
+        if (!(cin >> choice)) {
+            cout << "Invalid input! Please enter a number between 1 and 8.\n";
+            clearInputBuffer();
+            continue;
+        }
+        clearInputBuffer();
         
         switch(choice) {
             case 1: {
-                int loc;
-                std::string pri, desc;
-                std::cout << "Enter location (node): ";
-                std::cin >> loc;
-                std::cout << "Enter priority (HIGH/MEDIUM/LOW): ";
-                std::cin >> pri;
-                std::cout << "Enter description: ";
-                std::cin.ignore();
-                std::getline(std::cin, desc);
+                int loc = getIntegerInput("Enter location (node): ");
+                string pri = getPriorityInput();
+                string desc = getStringInput("Enter description: ");
                 incidents.addIncident(loc, pri, desc);
                 break;
             }
                 
             case 2: {
-                int location;
-                std::cout << "Enter incident location (node): ";
-                std::cin >> location;
+                int location = getIntegerInput("Enter incident location (node): ");
                 Ambulance* nearest = rm.findNearestAmbulance(location, cityGraph);
                 if (nearest) {
-                    std::cout << "Nearest available ambulance: ";
+                    cout << "Nearest available ambulance: ";
                     nearest->display();
                     int dist = cityGraph.dijkstra(nearest->getLocation(), location);
-                    std::cout << "Estimated travel time: " << dist << " units" << std::endl;
+                    cout << "Estimated travel time: " << dist << " units" << endl;
                 } else {
-                    std::cout << "No available ambulances!" << std::endl;
+                    cout << "No available ambulances!" << endl;
                 }
                 break;
             }
                 
             case 3: {
-                int ambId, incId, loc;
-                std::cout << "Enter ambulance ID: ";
-                std::cin >> ambId;
-                std::cout << "Enter incident ID: ";
-                std::cin >> incId;
-                std::cout << "Enter incident location (node): ";
-                std::cin >> loc;
+                int ambId = getIntegerInput("Enter ambulance ID: ");
+                int incId = getIntegerInput("Enter incident ID: ");
+                int loc = getIntegerInput("Enter incident location (node): ");
                 
                 if (rm.dispatchAmbulance(ambId, incId, loc)) {
-                    std::cout << "Dispatch confirmed!" << std::endl;
+                    cout << "Dispatch confirmed!" << endl;
                 }
                 break;
             }
                 
             case 4: {
-                int ambId;
-                std::cout << "Enter ambulance ID to mark complete: ";
-                std::cin >> ambId;
+                int ambId = getIntegerInput("Enter ambulance ID to mark complete: ");
                 rm.completeAssignment(ambId);
                 break;
             }
@@ -312,20 +344,20 @@ void dispatcherMenu(Graph &cityGraph, ResourceManager &rm, IncidentQueue &incide
                 cityGraph.display();
                 rm.displayAll();
                 incidents.displayAll();
-                std::cout << "Active incidents: " << incidents.getActiveCount() << std::endl;
+                cout << "Active incidents: " << incidents.getActiveCount() << endl;
                 break;
                 
             case 7:
                 incidents.saveToFile("incidents_current.txt");
-                std::cout << "Current incidents saved to file." << std::endl;
+                cout << "Current incidents saved to file." << endl;
                 break;
                 
             case 8:
-                std::cout << "Returning to main menu..." << std::endl;
+                cout << "Returning to main menu..." << endl;
                 break;
                 
             default:
-                std::cout << "Invalid choice!" << std::endl;
+                cout << "Invalid choice! Please enter a number between 1 and 8.\n";
         }
         
     } while (choice != 8);
@@ -339,19 +371,25 @@ void interactiveMenu() {
     int roleChoice;
     
     do {
-        std::cout << "\nEMERGENCY ROUTING SYSTEM" << std::endl;
-        std::cout << "Select Role:" << std::endl;
-        std::cout << "1. Dispatcher (Handle emergencies)" << std::endl;
-        std::cout << "2. Administrator (System setup)" << std::endl;
-        std::cout << "3. View Only (System status)" << std::endl;
-        std::cout << "0. Exit System" << std::endl;
-        std::cout << "Choice: ";
-        std::cin >> roleChoice;
+        cout << "\nEMERGENCY ROUTING SYSTEM" << endl;
+        cout << "Select Role:" << endl;
+        cout << "1. Dispatcher (Handle emergencies)" << endl;
+        cout << "2. Administrator (System setup)" << endl;
+        cout << "3. View Only (System status)" << endl;
+        cout << "0. Exit System" << endl;
+        cout << "Choice: ";
+        
+        if (!(cin >> roleChoice)) {
+            cout << "Invalid input! Please enter a number between 0 and 3.\n";
+            clearInputBuffer();
+            continue;
+        }
+        clearInputBuffer();
         
         switch(roleChoice) {
             case 1: {
-                std::cout << "\nDISPATCHER MODE" << std::endl;
-                std::cout << "Loading default configurations..." << std::endl;
+                cout << "\nDISPATCHER MODE" << endl;
+                cout << "Loading default configurations..." << endl;
                 cityGraph.loadFromFile("map_small.txt");
                 rm.loadFromFile("ambulances.txt");
                 incidents.loadFromFile("incidents.txt", cityGraph);
@@ -360,8 +398,8 @@ void interactiveMenu() {
             }
                 
             case 2: {
-                std::cout << "\nADMINISTRATOR MODE" << std::endl;
-                std::cout << "Loading default configurations..." << std::endl;
+                cout << "\nADMINISTRATOR MODE" << endl;
+                cout << "Loading default configurations..." << endl;
                 cityGraph.loadFromFile("map_small.txt");
                 rm.loadFromFile("ambulances.txt");
                 adminMenu(rm, cityGraph, incidents);
@@ -369,7 +407,7 @@ void interactiveMenu() {
             }
                 
             case 3: {
-                std::cout << "\nSYSTEM STATUS" << std::endl;
+                cout << "\nSYSTEM STATUS" << endl;
                 cityGraph.loadFromFile("map_small.txt");
                 rm.loadFromFile("ambulances.txt");
                 incidents.loadFromFile("incidents.txt", cityGraph);
@@ -377,39 +415,51 @@ void interactiveMenu() {
                 cityGraph.display();
                 rm.displayAll();
                 incidents.displayAll();
-                std::cout << "Active incidents: " << incidents.getActiveCount() << std::endl;
+                cout << "Active incidents: " << incidents.getActiveCount() << endl;
                 
-                std::cout << "\nPress Enter to continue...";
-                std::cin.ignore();
-                std::cin.get();
+                cout << "\nPress Enter to continue...";
+                cin.get();
                 break;
             }
                 
             case 0:
-                std::cout << "Exiting system..." << std::endl;
+                cout << "Exiting system..." << endl;
                 break;
                 
             default:
-                std::cout << "Invalid choice!" << std::endl;
+                cout << "Invalid choice! Please enter a number between 0 and 3.\n";
         }
         
     } while (roleChoice != 0);
 }
 
 int main() {
-    std::srand(std::time(0));
+    srand(time(0));
     
-    
-    std::cout << "  EMERGENCY ROUTING & RESOURCE SYSTEM   " << std::endl;
-    std::cout << "        DSA Project - Week 12 Demo      " << std::endl;
-    
+    cout << "  EMERGENCY ROUTING & RESOURCE SYSTEM   " << endl;
+    cout << "        DSA Project - Week 12 Demo      " << endl;
     
     int choice;
-    std::cout << "\nChoose mode:" << std::endl;
-    std::cout << "1. Role-Based Interactive Menu" << std::endl;
-    std::cout << "2. Automated Demo (Presentation)" << std::endl;
-    std::cout << "Choice: ";
-    std::cin >> choice;
+    
+    while (true) {
+        cout << "\nChoose mode:" << endl;
+        cout << "1. Role-Based Interactive Menu" << endl;
+        cout << "2. Automated Demo (Presentation)" << endl;
+        cout << "Choice: ";
+        
+        if (!(cin >> choice)) {
+            cout << "Invalid input! Please enter 1 or 2.\n";
+            clearInputBuffer();
+            continue;
+        }
+        clearInputBuffer();
+        
+        if (choice == 1 || choice == 2) {
+            break;
+        } else {
+            cout << "Invalid choice! Please enter 1 or 2.\n";
+        }
+    }
     
     if (choice == 1) {
         interactiveMenu();

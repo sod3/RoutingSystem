@@ -11,10 +11,8 @@
 
 using namespace std;
 
-/* ---------- Incident ---------- */
-
 Incident::Incident(int loc, const string &pri, const string &desc) {
-    static int nextId = 1;
+    static int nextId = 1; // Static variable to generate unique IDs
     id = nextId++;
     location = loc;
     priority = pri;
@@ -65,14 +63,13 @@ void Incident::display() const {
 
     cout << endl;
 }
-
-/* ---------- Priority Compare ---------- */
+// Shows incident details in readable format
+// Incident 5 | Node 12 | HIGH | Accident case (active)
 
 bool CompareIncidentPriority::operator()(const Incident* a, const Incident* b) {
-    return a->getPriorityValue() < b->getPriorityValue();
+    return a->getPriorityValue() < b->getPriorityValue(); // Higher priority incidents come first
 }
-
-/* ---------- Incident Queue ---------- */
+//Returns true if a has lower priority than b
 
 IncidentQueue::IncidentQueue() {
     srand(time(0));
@@ -89,26 +86,29 @@ void IncidentQueue::addIncident(int location, const string &priority, const stri
 
     cout << "Incident added\n";
 }
+// Creates new incident and adds to priority queue and list
 
 void IncidentQueue::reAddIncident(Incident* inc) {
     pq.push(inc);
 }
+// Puts an incident back in the queue during reassignment if incident wasn't handled
 
 Incident* IncidentQueue::getNextIncident() {
     if (pq.empty())
         return nullptr;
 
-    Incident* next = pq.top();
-    pq.pop();
+    Incident* next = pq.top(); // Get highest priority incident
+    pq.pop(); // Remove it from the queue
     return next;
 }
+// Gets the most urgent incident
 
 bool IncidentQueue::isEmpty() const {
-    return pq.empty();
+    return pq.empty(); // Check if there are no incidents in the queue
 }
 
 int IncidentQueue::size() const {
-    return pq.size();
+    return pq.size(); // Returns number of incidents in the queue
 }
 
 int IncidentQueue::getActiveCount() const {
@@ -118,7 +118,7 @@ int IncidentQueue::getActiveCount() const {
             count++;
     }
     return count;
-}
+} // Counts how many incidents are still unresolved
 
 void IncidentQueue::displayAll() const {
     cout << "\nIncidents:\n";
@@ -221,7 +221,7 @@ void IncidentQueue::generateTestIncidents(int count, Graph &graph) {
     }
 
     cout << count << " test incidents added\n";
-}
+} // Creates random incidents for testing
 
 void IncidentQueue::clearAll() {
     while (!pq.empty())

@@ -1,5 +1,5 @@
 # Simple 4-node city map
-# Format: node1 node2 weight
+# Format: node1 node2 weight in time(min)
 0 1 10
 0 2 20
 0 3 15

@@ -12,20 +12,21 @@ void Graph::addNode(int nodeId) {
     if (find(nodes.begin(), nodes.end(), nodeId) == nodes.end()) {
         nodes.push_back(nodeId);
     }
-}
+} // adds a new location to map, avoid  duplicates using find()
 
 void Graph::addEdge(int src, int dest, int weight) {
     addNode(src);
     addNode(dest);
 
-    adjList[src].push_back({dest, weight});
-    adjList[dest].push_back({src, weight});
+    adjList[src].push_back({dest, weight}); // adds road from src to dest
+    adjList[dest].push_back({src, weight}); // adds road from dest to src
 }
+// Adds a bidirectional road between two locations
 
 void Graph::updateEdgeWeight(int src, int dest, int newWeight) {
     bool found = false;
 
-    for (auto &n : adjList[src]) {
+    for (auto &n : adjList[src]) { // Update src→dest direction
         if (n.first == dest) {
             n.second = newWeight;
             found = true;
@@ -33,7 +34,7 @@ void Graph::updateEdgeWeight(int src, int dest, int newWeight) {
         }
     }
 
-    for (auto &n : adjList[dest]) {
+    for (auto &n : adjList[dest]) { // Update dest→src direction
         if (n.first == src) {
             n.second = newWeight;
             break;
@@ -47,9 +48,10 @@ void Graph::updateEdgeWeight(int src, int dest, int newWeight) {
 }
 
 void Graph::markRoadBlocked(int src, int dest) {
-    blockedRoads[{min(src, dest), max(src, dest)}] = true;
+    blockedRoads[{min(src, dest), max(src, dest)}] = true; // mark road as blocked in both directions
     cout << "Road blocked\n";
 }
+
 
 void Graph::markRoadOpen(int src, int dest) {
     blockedRoads.erase({min(src, dest), max(src, dest)});
@@ -59,10 +61,12 @@ void Graph::markRoadOpen(int src, int dest) {
 bool Graph::isRoadBlocked(int src, int dest) const {
     return blockedRoads.find({min(src, dest), max(src, dest)}) != blockedRoads.end();
 }
+// Checks if road is blocked returns: true if road is in blockedRoads map
+
 
 vector<pair<int, int>> Graph::getNeighbors(int node) {
     return adjList[node];
-}
+} // Returns all roads connected to a node
 
 vector<int> Graph::getAllNodes() {
     return nodes;
@@ -72,40 +76,51 @@ int Graph::dijkstra(int start, int end) {
     if (start == end)
         return 0;
 
-    priority_queue<pair<int, int>,
-                   vector<pair<int, int>>,
-                   greater<pair<int, int>>> pq;
+    // like a to do list values will be pushed and sorted
+    // in <int, int> first int is distance, second is node id
+    priority_queue<pair<int, int>, // what we store
+                   vector<pair<int, int>>, // How to store it
+                   greater<pair<int, int>>> pq; // how to sort smallest first
 
-    map<int, int> dist;
+    map<int, int> dist; // map to store distances
     for (int n : nodes)
-        dist[n] = INT_MAX;
+        dist[n] = INT_MAX; // Initialize all distances to infinity
 
-    dist[start] = 0;
+    dist[start] = 0; // Distance to start node is 0
     pq.push({0, start});
 
-    while (!pq.empty()) {
-        int d = pq.top().first;
-        int u = pq.top().second;
-        pq.pop();
+while (!pq.empty()) {
+    // 5. Take the CLOSEST place from to-do list
+    int currentDist = pq.top().first;   // Time to get here
+    int currentNode = pq.top().second;  // Where we are
+    pq.pop();  // Remove from to-do list
+    
+    // 6. Found destination? Return the time!
+    if (currentNode == end)
+        return currentDist;
+    
+    // 7. Skip if we found a better path already
+    if (currentDist > dist[currentNode])
+        continue;
 
-        if (u == end)
-            return d;
-
-        if (d > dist[u])
-            continue;
-
-        for (auto nb : adjList[u]) {
-            int v = nb.first;
-            int w = nb.second;
-
-            if (d + w < dist[v]) {
-                dist[v] = d + w;
-                pq.push({dist[v], v});
-            }
+    // 8. Check all roads from current location
+    for (auto neighbor : adjList[currentNode]) {
+        int nextNode = neighbor.first;   // The neighbor
+        int roadTime = neighbor.second;  // Time to travel this road
+        
+        // 9. Calculate: time to current + time to neighbor
+        int totalTime = currentDist + roadTime;
+        
+        // 10. Is this FASTER than previous best?
+        if (totalTime < dist[nextNode]) {
+            // YES! Found a better route
+            dist[nextNode] = totalTime;           // Update diary
+            pq.push({totalTime, nextNode});       // Add to to-do list
         }
     }
-
-    return INT_MAX;
+}
+// 11. If loop ends without finding destination
+return INT_MAX;  // Means "can't reach there"
 }
 
 int Graph::dijkstraWithBlocked(int start, int end) {
@@ -124,30 +139,31 @@ int Graph::dijkstraWithBlocked(int start, int end) {
     pq.push({0, start});
 
     while (!pq.empty()) {
-        int d = pq.top().first;
-        int u = pq.top().second;
+        int currentDist = pq.top().first;
+        int currentNode = pq.top().second;
         pq.pop();
 
-        if (u == end)
-            return d;
+        if (currentNode == end)
+            return currentDist;
 
-        if (d > dist[u])
+        if (currentDist > dist[currentNode])
             continue;
 
-        for (auto nb : adjList[u]) {
-            int v = nb.first;
-            int w = nb.second;
+        for (auto neighbor : adjList[currentNode]) {
+            int nextNode = neighbor.first;
+            int roadWeight = neighbor.second;
 
-            if (isRoadBlocked(u, v))
+            if (isRoadBlocked(currentNode, nextNode))
                 continue;
 
-            if (d + w < dist[v]) {
-                dist[v] = d + w;
-                pq.push({dist[v], v});
+            int totalDist = currentDist + roadWeight;
+
+            if (totalDist < dist[nextNode]) {
+                dist[nextNode] = totalDist;
+                pq.push({totalDist, nextNode});
             }
         }
     }
-
     return INT_MAX;
 }
 
@@ -204,7 +220,7 @@ void Graph::display() {
     cout << "\nGraph\n";
     cout << "Nodes: " << nodes.size() << endl;
 
-    if (!blockedRoads.empty()) {
+    if (!blockedRoads.empty()) { // If there are blocked roads
         cout << "Blocked: ";
         for (auto r : blockedRoads)
             cout << r.first.first << "-" << r.first.second << " ";
@@ -213,13 +229,14 @@ void Graph::display() {
 
     cout << "Roads:\n";
 
-    map<pair<int, int>, bool> shown;
+    map<pair<int, int>, bool> shown; // Tracks which roads we've already shown
     for (int n : nodes) {
         for (auto nb : adjList[n]) {
             int a = min(n, nb.first);
             int b = max(n, nb.first);
+            // To normalize road representation, road 1-2 and Road 2-1 become the same: (1, 2), This prevents duplicates!
 
-            if (!shown[{a, b}]) {
+            if (!shown[{a, b}]) { // // Haven't shown this road yet
                 cout << a << " <-> " << b << " (" << nb.second << ")";
                 if (isRoadBlocked(a, b))
                     cout << " X";

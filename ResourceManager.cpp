@@ -6,6 +6,7 @@
 #include <fstream>
 #include <climits>
 #include <algorithm>
+#include <limits>
 
 using namespace std;
 
@@ -29,18 +30,33 @@ void ResourceManager::addAmbulance(int id, int location) {
     ambulances.push_back(new Ambulance(id, location));
     cout << "Ambulance added\n";
 }
+// Adds new ambulance to the fleet
+// Checks if ambulance ID already exists (no duplicates)
+// Creates new Ambulance object with given ID and location
+// Adds it to the list
 
 void ResourceManager::addAmbulanceInteractive() {
     int id, location;
-
+    
     cout << "Enter ID: ";
-    cin >> id;
-
+    while (!(cin >> id)) {
+        cout << "Invalid input! Please enter a valid number for ID: ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    
     cout << "Enter location: ";
-    cin >> location;
-
+    while (!(cin >> location)) {
+        cout << "Invalid input! Please enter a valid number for location: ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    
     addAmbulance(id, location);
 }
+// Interactive version asks user for input and adds ambulance
 
 bool ResourceManager::removeAmbulance(int id) {
     for (auto it = ambulances.begin(); it != ambulances.end(); it++) {
@@ -60,6 +76,8 @@ bool ResourceManager::removeAmbulance(int id) {
     cout << "Ambulance not found\n";
     return false;
 }
+// Removes an ambulance from the system
+// Won't remove if ambulance is busy (on a call)
 
 Ambulance* ResourceManager::findNearestAmbulance(int incidentLocation, Graph &graph) {
     Ambulance* nearest = nullptr;
@@ -77,6 +95,8 @@ Ambulance* ResourceManager::findNearestAmbulance(int incidentLocation, Graph &gr
 
     return nearest;
 }
+// Finds the closest available ambulance to an emergency
+// Uses Dijkstra's algorithm (from Graph class) to find shortest path distance
 
 Ambulance* ResourceManager::findAmbulanceById(int id) {
     for (auto amb : ambulances) {
@@ -85,6 +105,8 @@ Ambulance* ResourceManager::findAmbulanceById(int id) {
     }
     return nullptr;
 }
+// Finds ambulance by its ID number
+
 
 bool ResourceManager::dispatchAmbulance(int ambulanceId, int incidentId, int incidentLocation) {
     Ambulance* amb = findAmbulanceById(ambulanceId);
@@ -99,10 +121,11 @@ bool ResourceManager::dispatchAmbulance(int ambulanceId, int incidentId, int inc
         return false;
     }
 
-    amb->dispatchTo(incidentId);
+    amb->dispatchTo(incidentId);  // Dispatch ambulance to incident function in Ambulance class
     cout << "Ambulance dispatched\n";
     return true;
 }
+// Sends a specific ambulance to a specific incident
 
 void ResourceManager::completeAssignment(int ambulanceId) {
     Ambulance* amb = findAmbulanceById(ambulanceId);
@@ -112,6 +135,7 @@ void ResourceManager::completeAssignment(int ambulanceId) {
         cout << "Assignment completed\n";
     }
 }
+// Marks an ambulance as available after completing its job
 
 void ResourceManager::reassignAmbulances(IncidentQueue &incidents, Graph &graph) {
     cout << "\nReassigning...\n";
@@ -125,7 +149,7 @@ void ResourceManager::reassignAmbulances(IncidentQueue &incidents, Graph &graph)
     int count = 0;
 
     while (!incidents.isEmpty()) {
-        Incident* inc = incidents.getNextIncident();
+        Incident* inc = incidents.getNextIncident(); // Get next incident from the queue
         if (inc && !inc->isResolved()) {
             temp.push_back(inc);
 
@@ -145,7 +169,7 @@ void ResourceManager::reassignAmbulances(IncidentQueue &incidents, Graph &graph)
 
     cout << "Done (" << count << " reassigned)\n";
 }
-
+// Reassigns all ambulances to optimize response to all pending incidents
 vector<Ambulance*> ResourceManager::getAllAmbulances() {
     return ambulances;
 }
@@ -176,7 +200,7 @@ void ResourceManager::displayAll() {
         return;
     }
 
-    for (auto amb : ambulances)
+    for (auto amb : ambulances) // Display each ambulance's details
         amb->display();
 
     cout << "Available: " << getAvailableCount() << "/" << ambulances.size() << endl;
